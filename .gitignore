@@ -16,6 +16,7 @@ DerivedData
 .idea/
 *.hmap
 *.xccheckout
+*.xcodeproj/*.xcworkspace
 
 #CocoaPods
 Pods
