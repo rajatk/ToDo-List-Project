@@ -50,7 +50,7 @@
 	NSDateFormatter *mdf = [[NSDateFormatter alloc] init];
 	[mdf setDateFormat:@"yyyy-MM-dd"];
 	NSDate *midnight = [mdf dateFromString:[mdf stringFromDate:self]];
-	[mdf release];
+//	[mdf release];
 	
 	return (int)[midnight timeIntervalSinceNow] / (60*60*24) *-1;
 }
@@ -70,7 +70,7 @@
 			text = @"Yesterday";
 			break;
 		default:
-			text = [NSString stringWithFormat:@"%ld days ago", (NSInteger)daysAgo];
+			text = [NSString stringWithFormat:@"%ld days ago", (long)daysAgo];
 	}
 	return text;
 }
@@ -89,7 +89,7 @@
 	NSDateFormatter *inputFormatter = [[NSDateFormatter alloc] init];
 	[inputFormatter setDateFormat:format];
 	NSDate *date = [inputFormatter dateFromString:string];
-	[inputFormatter release];
+//	[inputFormatter release];
 	return date;
 }
 
@@ -122,16 +122,16 @@
     NSComparisonResult midnight_result = [date compare:midnight];
 	if (midnight_result == NSOrderedDescending) {
 		if (prefixed) {
-			[displayFormatter setDateFormat:@"'at' h:mm a"]; // at 11:30 am
+			[displayFormatter setDateFormat:@"'at' h:mm:ss a"]; // at 11:30 am
 		} else {
-			[displayFormatter setDateFormat:@"h:mm a"]; // 11:30 am
+			[displayFormatter setDateFormat:@"h:mm:ss a"]; // 11:30 am
 		}
 	} else {
 		// check if date is within last 7 days
 		NSDateComponents *componentsToSubtract = [[NSDateComponents alloc] init];
 		[componentsToSubtract setDay:-7];
 		NSDate *lastweek = [calendar dateByAddingComponents:componentsToSubtract toDate:today options:0];
-		[componentsToSubtract release];
+//		[componentsToSubtract release];
         NSComparisonResult lastweek_result = [date compare:lastweek];
 		if (lastweek_result == NSOrderedDescending) {
             if (displayTime) {
@@ -172,7 +172,7 @@
 	// use display formatter to return formatted date string
 	displayString = [displayFormatter stringFromDate:date];
     
-    [displayFormatter release];
+//    [displayFormatter release];
     
 	return displayString;
 }
@@ -189,7 +189,7 @@
 	NSDateFormatter *outputFormatter = [[NSDateFormatter alloc] init];
 	[outputFormatter setDateFormat:format];
 	NSString *timestamp_str = [outputFormatter stringFromDate:self];
-	[outputFormatter release];
+//	[outputFormatter release];
 	return timestamp_str;
 }
 
@@ -202,7 +202,7 @@
 	[outputFormatter setDateStyle:dateStyle];
 	[outputFormatter setTimeStyle:timeStyle];
 	NSString *outputString = [outputFormatter stringFromDate:self];
-	[outputFormatter release];
+//	[outputFormatter release];
 	return outputString;
 }
 
@@ -229,7 +229,7 @@
 	[componentsToSubtract setDay: 0 - ([weekdayComponents weekday] - 1)];
 	beginningOfWeek = nil;
 	beginningOfWeek = [calendar dateByAddingComponents:componentsToSubtract toDate:self options:0];
-	[componentsToSubtract release];
+//	[componentsToSubtract release];
 	
 	//normalize to midnight, extract the year, month, and day components and create a new date from those components.
 	NSDateComponents *components = [calendar components:(NSYearCalendarUnit | NSMonthCalendarUnit | NSDayCalendarUnit)
@@ -253,7 +253,7 @@
 	// to get the end of week for a particular date, add (7 - weekday) days
 	[componentsToAdd setDay:(7 - [weekdayComponents weekday])];
 	NSDate *endOfWeek = [calendar dateByAddingComponents:componentsToAdd toDate:self options:0];
-	[componentsToAdd release];
+//	[componentsToAdd release];
 	
 	return endOfWeek;
 }

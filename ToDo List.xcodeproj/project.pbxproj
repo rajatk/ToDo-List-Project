@@ -31,6 +31,8 @@
 		0423A4151892107800880814 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0423A4141892107700880814 /* Security.framework */; };
 		0423A4171892107C00880814 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0423A4161892107C00880814 /* StoreKit.framework */; };
 		0423A4191892108100880814 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0423A4181892108100880814 /* SystemConfiguration.framework */; };
+		0423A41F18999F9400880814 /* NSDate+Helper.m in Sources */ = {isa = PBXBuildFile; fileRef = 0423A41D18999F9400880814 /* NSDate+Helper.m */; };
+		0423A42018999F9400880814 /* README.textile in Resources */ = {isa = PBXBuildFile; fileRef = 0423A41E18999F9400880814 /* README.textile */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,6 +75,9 @@
 		0423A4141892107700880814 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		0423A4161892107C00880814 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		0423A4181892108100880814 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
+		0423A41C18999F9400880814 /* NSDate+Helper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDate+Helper.h"; sourceTree = "<group>"; };
+		0423A41D18999F9400880814 /* NSDate+Helper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDate+Helper.m"; sourceTree = "<group>"; };
+		0423A41E18999F9400880814 /* README.textile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.textile; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,6 +117,7 @@
 		0423A3C518920E7700880814 = {
 			isa = PBXGroup;
 			children = (
+				0423A41A18999F8500880814 /* External Frameworks */,
 				0423A3D718920E7700880814 /* ToDo List */,
 				0423A3F618920E7700880814 /* ToDo ListTests */,
 				0423A3D018920E7700880814 /* Frameworks */,
@@ -192,6 +198,24 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		0423A41A18999F8500880814 /* External Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				0423A41B18999F9400880814 /* nsdate-helper */,
+			);
+			name = "External Frameworks";
+			sourceTree = "<group>";
+		};
+		0423A41B18999F9400880814 /* nsdate-helper */ = {
+			isa = PBXGroup;
+			children = (
+				0423A41C18999F9400880814 /* NSDate+Helper.h */,
+				0423A41D18999F9400880814 /* NSDate+Helper.m */,
+				0423A41E18999F9400880814 /* README.textile */,
+			);
+			path = "nsdate-helper";
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -269,6 +293,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0423A3EA18920E7700880814 /* Images.xcassets in Resources */,
+				0423A42018999F9400880814 /* README.textile in Resources */,
 				0423A3DC18920E7700880814 /* InfoPlist.strings in Resources */,
 				0423A3E518920E7700880814 /* Main.storyboard in Resources */,
 			);
@@ -289,6 +314,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0423A41F18999F9400880814 /* NSDate+Helper.m in Sources */,
 				0423A3E818920E7700880814 /* ViewController.m in Sources */,
 				0423A3E218920E7700880814 /* AppDelegate.m in Sources */,
 				0423A3DE18920E7700880814 /* main.m in Sources */,
