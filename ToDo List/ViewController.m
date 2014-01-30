@@ -19,6 +19,8 @@
 
 @implementation ViewController
 
+NSMutableDictionary *doneDict, *undoneDict;
+
 NSMutableArray *doneList, *undoneList, *offlineChanges;
 UITableView *todoTable;
 UILabel *syncStatus, *lastSyncedTime, *lastSyncedItem;
@@ -28,14 +30,103 @@ float refreshFreq = 5.0;
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-	// Do any additional setup after loading the view, typically from a nib.
+	
+	[self setupUI];
+	[self firstFetch];
+}
+
+-(void)firstFetch{
+	doneList = [[NSMutableArray alloc] init];
+	undoneList = [[NSMutableArray alloc] init];
+	offlineChanges = [[NSMutableArray alloc] init];
+	doneDict = [[NSMutableDictionary alloc] init];
+	undoneDict = [[NSMutableDictionary alloc] init];
+	
+	syncStatus.text = @"syncing...";
+	PFQuery *query = [PFQuery queryWithClassName:@"CP_Todo"];
+	[query orderByAscending:@"updatedAt"];
+	//query.cachePolicy = kPFCachePolicyCacheThenNetwork;
+	[query findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error) {
+		if (!error) {
+			NSLog(@"Successfully retrieved %d todo items.", objects.count);
+			
+			//[doneList removeAllObjects];
+			//[undoneList removeAllObjects];
+			
+			for (PFObject *object in objects) {
+				//NSLog(@"got object = %@", object);
+				
+				PFObject *undoneDictIndex = [undoneDict objectForKey:[object objectId]];
+				PFObject *doneDictIndex = [doneDict objectForKey:[object objectId]];
+				
+				if([[object objectForKey:@"completed"] intValue] == NO)
+				{
+					if(!undoneDictIndex)
+					{
+						[undoneList addObject:object];
+						[undoneDict setValue:object forKey:[object objectId]];
+					}
+					
+					if(doneDictIndex)
+					{
+						//item should not be in completed list.
+						//delete item from done list
+						
+						[doneList removeObject:doneDictIndex];
+						[doneDict removeObjectForKey:[object objectId]];
+					}
+						
+//					if([undoneList containsObject:object])
+//						NSLog(@"dup item. don't add: %@", [object objectForKey:@"text"]);
+//					else
+//						[undoneList addObject:object];
+				}
+				else
+				{
+					//this is a completed item
+					if(!doneDictIndex)
+					{
+						[doneList addObject:object];
+						[doneDict setValue:object forKey:[object objectId]];;
+					}
+					
+					if(undoneDictIndex)
+					{
+						//item should not be in incomplete list.
+						//delete item from the list
+						
+						[undoneList removeObject:undoneDictIndex];
+						[undoneDict removeObjectForKey:[object objectId]];
+					}
+					
+//					if([doneList containsObject:object])
+//						NSLog(@"dup item. don't add: %@", [object objectForKey:@"text"]);
+//					else
+//						[doneList addObject:object];
+				}
+			}
+			
+			[todoTable reloadData];
+			
+			
+			
+			[refreshTimer invalidate];
+			refreshTimer = [NSTimer scheduledTimerWithTimeInterval:refreshFreq target:self selector:@selector(refreshTableQueryWithDict) userInfo:nil repeats:YES];
+			syncStatus.text = nil;
+			
+		} else {
+			NSLog(@"Error with initial query: %@ %@", error, [error userInfo]);
+		}
+	}];
+}
+
+-(void)setupUI{
 	
 	todoTable = [[UITableView alloc] initWithFrame:CGRectMake(0, 65, scrW, scrH - 150)];
 	[todoTable setDataSource:self];
 	[todoTable setDelegate:self];
 	[self.view addSubview:todoTable];
 	
-	//[self.view setBackgroundColor:[UIColor lightGrayColor]];
 	UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(0, scrH - 150 + 65, scrW, 2)];
 	[divider setBackgroundColor:[UIColor lightGrayColor]];
 	[self.view addSubview:divider];
@@ -65,51 +156,6 @@ float refreshFreq = 5.0;
 	//add left menu button
 	UIBarButtonItem *rightButton = [[UIBarButtonItem alloc] initWithTitle:@"Add Item" style:UIBarButtonItemStylePlain target:self action:@selector(addNewTodoItem)];
 	[self.navigationController.navigationBar.topItem setRightBarButtonItem:rightButton];
-	
-	doneList = [[NSMutableArray alloc] init];
-	undoneList = [[NSMutableArray alloc] init];
-	
-	syncStatus.text = @"syncing...";
-	PFQuery *query = [PFQuery queryWithClassName:@"CP_Todo"];
-	[query orderByAscending:@"updatedAt"];
-	query.cachePolicy = kPFCachePolicyCacheThenNetwork;
-	[query findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error) {
-		if (!error) {
-			NSLog(@"Successfully retrieved %d todo items.", objects.count);
-			
-			[doneList removeAllObjects];
-			[undoneList removeAllObjects];
-			
-			for (PFObject *object in objects) {
-				//NSLog(@"got object = %@", object);
-				
-				if([[object objectForKey:@"completed"] intValue] == NO)
-				{
-					if([undoneList containsObject:object])
-						NSLog(@"dup item. don't add: %@", [object objectForKey:@"text"]);
-					else
-						[undoneList addObject:object];
-				}
-				else
-				{
-					if([doneList containsObject:object])
-						NSLog(@"dup item. don't add: %@", [object objectForKey:@"text"]);
-					else
-						[doneList addObject:object];
-				}
-			}
-			
-			[todoTable reloadData];
-			
-			[refreshTimer invalidate];
-			refreshTimer = [NSTimer scheduledTimerWithTimeInterval:refreshFreq target:self selector:@selector(refreshTableQuery) userInfo:nil repeats:YES];
-			syncStatus.text = nil;
-			
-		} else {
-			NSLog(@"Error with initial query: %@ %@", error, [error userInfo]);
-		}
-	}];
-	
 }
 
 - (void)didReceiveMemoryWarning
@@ -124,9 +170,89 @@ float refreshFreq = 5.0;
 	[newItemAlert show];
 }
 
+-(void)refreshTableQueryWithDict{
+	syncStatus.text = @"syncing...";
+	PFQuery *query = [PFQuery queryWithClassName:@"CP_Todo"];
+	[query orderByAscending:@"updatedAt"];
+	//query.cachePolicy = kPFCachePolicyCacheThenNetwork;
+	[query findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error) {
+		if (!error) {
+			NSLog(@"Successfully retrieved %lu todo items.", (unsigned long)objects.count);
+			
+			for (PFObject *object in objects) {
+				//NSLog(@"got object = %@", object);
+				
+				PFObject *undoneDictIndex = [undoneDict objectForKey:[object objectId]];
+				PFObject *doneDictIndex = [doneDict objectForKey:[object objectId]];
+				
+				if([[object objectForKey:@"completed"] intValue] == NO)
+				{
+					if(!undoneDictIndex)
+					{
+						//this is a new item
+						//add item to incomplete list
+						
+						[undoneList addObject:object];
+						[undoneDict setValue:object forKey:[object objectId]];
+					}
+					
+					if(doneDictIndex)
+					{
+						//item should not be in completed list.
+						//delete item from done list
+						
+						[doneList removeObject:doneDictIndex];
+						[doneDict removeObjectForKey:[object objectId]];
+					}
+					
+					//					if([undoneList containsObject:object])
+					//						NSLog(@"dup item. don't add: %@", [object objectForKey:@"text"]);
+					//					else
+					//						[undoneList addObject:object];
+				}
+				else
+				{
+					//this is a completed item
+					if(!doneDictIndex)
+					{
+						[doneList addObject:object];
+						[doneDict setValue:object forKey:[object objectId]];;
+					}
+					
+					if(undoneDictIndex)
+					{
+						//item should not be in incomplete list.
+						//delete item from the list
+						
+						[undoneList removeObject:undoneDictIndex];
+						[undoneDict removeObjectForKey:[object objectId]];
+					}
+					
+					//					if([doneList containsObject:object])
+					//						NSLog(@"dup item. don't add: %@", [object objectForKey:@"text"]);
+					//					else
+					//						[doneList addObject:object];
+				}
+			}
+			
+			[todoTable reloadData];
+			
+			[todoTable reloadData];
+			
+//			[refreshTimer invalidate];
+			//			refreshTimer = [NSTimer scheduledTimerWithTimeInterval:refreshFreq target:self selector:@selector(refreshTableQuery) userInfo:nil repeats:YES];
+			syncStatus.text = nil;
+			
+		} else {
+			NSLog(@"Error with initial query: %@ %@", error, [error userInfo]);
+		}
+	}];
+
+}
+
 -(void)refreshTableQuery{
 	
-	NSLog(@"refreshing...");
+//	NSLog(@"refreshing...");
 	syncStatus.text = @"syncing...";
 	
 	PFQuery *query = [PFQuery queryWithClassName:@"CP_Todo"];
@@ -136,8 +262,8 @@ float refreshFreq = 5.0;
 		if (!error) {
 //			[refreshTimer invalidate];
 //			NSLog(@"Successfully retrieved %d todo items.", objects.count);
-			[doneList removeAllObjects];
-			[undoneList removeAllObjects];
+			//[doneList removeAllObjects];
+			//[undoneList removeAllObjects];
 			
 			for (PFObject *object in objects) {
 //				NSLog(@"got object = %@", object);
@@ -158,6 +284,8 @@ float refreshFreq = 5.0;
 						[doneList addObject:object];
 				}
 			}
+			
+//			NSLog(@"%i offline unsynced items: %@", [offlineChanges count], offlineChanges);
 			
 			if([objects count] > 0)
 			lastSyncedItem.text = [NSString stringWithFormat:@"Last synced item was '%@'",
@@ -221,26 +349,42 @@ float refreshFreq = 5.0;
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
 	//move task to appropriate list
 	NSMutableArray *srcList, *destList;
+	NSMutableDictionary *srcDict, *destDict;
 	bool completionState;
 	if(indexPath.section == 0){
 		srcList = undoneList;
 		destList = doneList;
+		srcDict = undoneDict;
+		destDict = doneDict;
 		completionState = YES;
 	}
 	else
 	{
 		srcList = doneList;
 		destList = undoneList;
+		srcDict = doneDict;
+		destDict = undoneDict;
 		completionState = NO;
 	}
 	
 	
 	PFObject *movingItem = [srcList objectAtIndex:indexPath.row];
+	NSLog(@"movingItem = %@", movingItem);
 	[movingItem setObject:[NSNumber numberWithBool:completionState] forKey:@"completed"];
+	[offlineChanges addObject:movingItem];
 	[movingItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
 		if(!error)
 		{
 			[self parseFinishedSavingObject:movingItem];
+			[offlineChanges removeObject:movingItem];
+			
+			
+			if([movingItem objectId]){
+				[destDict setObject:movingItem forKey:[movingItem objectId]];
+				[srcDict removeObjectForKey:[movingItem objectId]];
+			}
+			else
+				NSLog(@"fix this. objectid nil");
 		}
 		else
 		{
@@ -250,6 +394,7 @@ float refreshFreq = 5.0;
 	
 	[destList addObject:movingItem];
 	[srcList removeObject:movingItem];
+	
 	[todoTable reloadData];
 	
 	//deselect cell
@@ -273,6 +418,7 @@ float refreshFreq = 5.0;
 			if(!error)
 			{
 				[self parseFinishedSavingObject:newTodoObject];
+				[undoneDict setObject:newTodoObject forKey:[newTodoObject objectId]];
 			}
 			else
 			{
