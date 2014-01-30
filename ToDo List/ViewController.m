@@ -46,6 +46,7 @@ float refreshFreq = 5.0;
 	PFQuery *query = [PFQuery queryWithClassName:@"CP_Todo"];
 	[query orderByAscending:@"updatedAt"];
 	//query.cachePolicy = kPFCachePolicyCacheThenNetwork;
+
 	[query findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error) {
 		if (!error) {
 			NSLog(@"Successfully retrieved %d todo items.", objects.count);
@@ -175,6 +176,7 @@ float refreshFreq = 5.0;
 	PFQuery *query = [PFQuery queryWithClassName:@"CP_Todo"];
 	[query orderByAscending:@"updatedAt"];
 	//query.cachePolicy = kPFCachePolicyCacheThenNetwork;
+	
 	[query findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error) {
 		if (!error) {
 			NSLog(@"Successfully retrieved %lu todo items.", (unsigned long)objects.count);
@@ -250,6 +252,7 @@ float refreshFreq = 5.0;
 
 }
 
+/*
 -(void)refreshTableQuery{
 	
 //	NSLog(@"refreshing...");
@@ -300,7 +303,7 @@ float refreshFreq = 5.0;
 			NSLog(@"Error with initial query: %@ %@", error, [error userInfo]);
 		}
 	}];
-}
+}*/
 
 #pragma mark table view method
 
@@ -372,12 +375,13 @@ float refreshFreq = 5.0;
 	NSLog(@"movingItem = %@", movingItem);
 	[movingItem setObject:[NSNumber numberWithBool:completionState] forKey:@"completed"];
 	[offlineChanges addObject:movingItem];
-	[movingItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+	
+	[movingItem saveEventually:^(BOOL succeeded, NSError *error) {
+	//[movingItem saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
 		if(!error)
 		{
 			[self parseFinishedSavingObject:movingItem];
 			[offlineChanges removeObject:movingItem];
-			
 			
 			if([movingItem objectId]){
 				[destDict setObject:movingItem forKey:[movingItem objectId]];
@@ -414,7 +418,10 @@ float refreshFreq = 5.0;
 		PFObject *newTodoObject = [PFObject objectWithClassName:@"CP_Todo"];
 		[newTodoObject setObject:[NSString stringWithString:newItemText.text] forKey:@"text"];
 		[newTodoObject setObject:[NSNumber numberWithBool:NO] forKey:@"completed"];
-		[newTodoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+		
+		[newTodoObject saveEventually:^(BOOL succeeded, NSError *error) {
+		
+//			[newTodoObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
 			if(!error)
 			{
 				[self parseFinishedSavingObject:newTodoObject];
